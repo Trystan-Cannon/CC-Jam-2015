@@ -1,0 +1,32 @@
+--[[
+    Button          Trystan Cannon
+                    20 June 2015
+]]
+--Loading APIs------------------------------------
+if not GraphicalObject then
+    os.loadAPI("/Layers/Classes/Graphics/GraphicalObject")
+end
+
+GraphicalObject.setChild(getfenv())
+local tButtonMetatable = { __index = getfenv() }
+--new---------------------------------------------
+--[[
+    Creates and returns a new button object.
+
+    NOTE:
+        Button labels that exceed the width of the
+        button are wrapped down the button as long
+        as there is enough vertical space.
+
+    @constructor
+]]
+function new(x, y, nWidth, nHeight, sLabel, nTextColor, nBackColor)
+    local self = setmetatable(GraphicalObject.new(x, y, nWidth, nHeight, true), tButtonMetatable)
+
+    self.sLabel     = sLabel or "Button"
+    self.nTextColor = nTextColor or colors.black
+    self.nBackColor = nBackColor or colors.white
+
+    return self
+end
+--------------------------------------------------

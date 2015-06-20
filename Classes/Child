@@ -1,0 +1,28 @@
+--[[
+    Looks like for the class system to work, we'll need to load parent classes
+    at the beginning of every class.
+
+    However, we can prevent some unnecessary reloading if we perform a check at
+    the beginning of each class to see if one's parent is already loaded.
+
+    Super classes are referenced via by using the parent table or using:
+        getmetatable(self).__index.some_function_here(...)
+]]
+
+if not Layer then
+    os.loadAPI("/Layers/Classes/Layer")
+end
+
+-- Create a child-parent relationship between these classes.
+-- This API should already be loaded into the global namespace before any classes are loaded, of course.
+Layer.setChild(getfenv())
+
+function summon(self)
+    Layer.summon(self)
+    print(self.bIsSummoned)
+end
+
+function hide(self)
+    Layer.hide(self)
+    print(self.bIsSummoned)
+end

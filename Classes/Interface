@@ -1,0 +1,59 @@
+--[[
+    Interface       Trystan Cannon
+                    19 June 2015
+
+        Each interface is a graphical object
+    with which users will interact. Because
+    layers may require more than one interface,
+    they will be contained with a table labeled
+    'tInterfaces.'
+
+        Layers are free to summon or hide any
+    interfaces that they possess, making it
+    possible for more than one interface to be
+    on screen at any one time for the same layer.
+
+        Each interface possesses its own 'Buffer'
+    object to which it will draw any graphical
+    data. This way, background information can be
+    drawn without interrupting the user.
+]]
+--Main Entry Point--------------------------------
+if not Buffer then
+    -- Should probably make all classes accessible through
+    -- the Layer API, so we don't have to know the file path.
+    os.loadAPI("/Layers/Classes/Buffer")
+end
+
+local tInterfaceMetatable = { __index = getfenv() }
+--isSummoned--------------------------------------
+function isSummoned(self)
+    return self.bIsSummoned
+end
+--summon------------------------------------------
+function summon(self)
+    self.bIsSummoned = true
+end
+--hide--------------------------------------------
+function hide(self)
+    self.bIsSummoned = false
+end
+--getBuffer---------------------------------------
+function getBuffer(self)
+    return self.tBuffer
+end
+--new---------------------------------------------
+--[[
+    Creates and returns a new interface object.
+
+    @constructor
+]]
+function new(nWidth, nHeight, x, y)
+    return setmetatable({
+        tBuffer           = Buffer.new(nWidth, nHeight, x, y, Layers.tBaseTerminal),
+        tGraphicalObjects = {},
+
+        bIsSummoned = false
+    }, tInterfaceMetatable)
+end
+--------------------------------------------------

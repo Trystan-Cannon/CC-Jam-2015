@@ -1,0 +1,61 @@
+--[[
+    Help            Trystan Cannon
+                    19 June 2015
+
+        The Help layer provides information about
+    all currently running layers and is always active
+    as long as the layers system is running.
+
+        Specifically, the Help layer gives access to a simple
+    'About' page as well as a list of all the currently
+    running layers. With this list is all of the hotkeys that
+    link to their respective layers.
+
+    Hotkey:
+        - Alt + H
+]]
+--Load APIs---------------------------------------
+-- Load dependencies/parents.
+if not Layer then
+    os.loadAPI("/Layers/Classes/Layer")
+end
+if not Interface then
+    os.loadAPI("/Layers/Classes/Interface")
+end
+
+Layer.setChild(getfenv())
+local tHelpMetatable = { __index = getfenv() }
+--summon------------------------------------------
+function summon(self)
+    Layer.summon(self)
+    self:update()
+end
+--hide--------------------------------------------
+function hide(self)
+    Layer.hide(self)
+end
+--update------------------------------------------
+function update(self, ...)
+    if not self:isSummoned() then
+        return
+    end
+
+    self:getInterfaces()[1]:getBuffer():render()
+end
+--new---------------------------------------------
+function new()
+    local self           = setmetatable(Layer.new("Help", keys.h), tHelpMetatable)
+    local tMainInterface = Interface.new(25, 5, 1, 2)
+
+    tMainInterface:getBuffer():setBackgroundColor(colors.cyan)
+    tMainInterface:getBuffer():clear()
+
+    tMainInterface:getBuffer():setCursorPos(7, 3)
+    tMainInterface:getBuffer():write("Help Layer")
+
+    table.insert(self.tInterfaces, tMainInterface)
+    return self
+end
+--Main Entry Point--------------------------------
+return new()
+--------------------------------------------------

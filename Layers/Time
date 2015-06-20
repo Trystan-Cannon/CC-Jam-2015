@@ -1,0 +1,67 @@
+--[[
+    Time            Trystan Cannon
+                    19 June 2015
+
+        The 'Time' layer simply reads the
+    current in-game time to the player in the
+    desired format. This format is a preference
+    that is adjustable via file setting.
+
+        In future, the setting will be adjustable
+    from the layer itself.
+]]
+--Load APIs---------------------------------------
+if not Layer then
+    os.loadAPI("/Layers/Classes/Layer")
+end
+if not Interface then
+    os.loadAPI("/Layers/Classes/Interface")
+end
+
+Layer.setChild(getfenv())
+local tTimeMetatable = { __index = getfenv() }
+--summon------------------------------------------
+function summon(self)
+    Layer.summon(self)
+    self:update()
+end
+--hide--------------------------------------------
+function hide(self)
+    Layer.hide(self)
+end
+--update------------------------------------------
+function update(self, ...)
+    if not self:isSummoned() then
+        return
+    end
+    -- Have some setup for switching off and on the time format preference.
+    -- Use a button API. We'll make that later.
+
+    -- Redraw the time.
+    local tBuffer = self.tInterfaces[1]:getBuffer()
+
+    tBuffer:setBackgroundColor(colors.cyan)
+    tBuffer:setTextColor(colors.white)
+    tBuffer:clear()
+
+    local sTime = textutils.formatTime(os.time(), true)
+    tBuffer:setCursorPos(tBuffer.nWidth / 2 - sTime:len() / 2, 2)
+    tBuffer:write(sTime)
+
+    tBuffer:render()
+
+    os.queueEvent("Time layer update.")
+end
+--new---------------------------------------------
+function new()
+    local self           = setmetatable(Layer.new("Time", keys.t), tTimeMetatable)
+    local tMainInterface = Interface.new(15, 3, Layers.tBaseTerminal.getSize() - 14, 2)
+
+    table.insert(self.tInterfaces, tMainInterface)
+    return self
+end
+--Main Entry Point--------------------------------
+-- Load the time format preference here.
+
+return new()
+--------------------------------------------------

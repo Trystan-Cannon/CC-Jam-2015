@@ -1,0 +1,109 @@
+--[[
+    Graphical Object    Trystan Cannon
+                        20 June 2015
+
+        The Graphical Object parent class
+    establishes a framework upon which all
+    graphics are built, giving the programmer
+    a common interface between all graphical
+    objects throughout the Layers system.
+
+    Commonalities between all graphical objects:
+        + x and y positions (top left corner of the object)
+        + 'render' function which draws the object to the screen
+        + width and height of the object (bounding box for circles, etc.)
+        + boolean designating if the object is clickable
+        + 'wasClicked' function to determine if the object was clicked based on click coordinates
+        + 'handleClick' function to handle a click given the click's coordinates
+
+    All functions native to the Graphical Object parent
+    class return the object as well as any other
+    data, making chaining possible.
+]]
+--Loading APIs------------------------------------
+local tGraphicalObjectMetatable = { __index = getfenv() }
+--setChild----------------------------------------
+function setChild(tChildClass)
+    setmetatable(tChildClass, tGraphicalObjectMetatable)
+end
+--getX--------------------------------------------
+function getX(self)
+    return self.x, self
+end
+--setX--------------------------------------------
+function setX(self, x)
+    self.x = x
+    return self
+end
+--getY--------------------------------------------
+function getY(self)
+    return self.y, self
+end
+--setY--------------------------------------------
+function setY(self, y)
+    self.y = y
+    return self
+end
+--getWidth----------------------------------------
+function getWidth(self)
+    return self.nWidth, self
+end
+--setWidth----------------------------------------
+function setWidth(self, nWidth)
+    if nWidth > 0 then
+        self.nWidth = nWidth
+    end
+
+    return self
+end
+--getHeight---------------------------------------
+function getHeight(self)
+    return self.nHeight
+end
+--setHeight---------------------------------------
+function setHeight(self, nHeight)
+    if nHeight > 0 then
+        self.nHeight = nHeight
+    end
+
+    return self
+end
+--isClickable-------------------------------------
+function isClickable(self)
+    return self.bIsClickable, self
+end
+--setClickable------------------------------------
+function setClickable(self, bIsClickable)
+    self.bIsClickable = bIsClickable
+    return self
+end
+--wasClicked--------------------------------------
+--[[
+    The click check is a simple rectangular check.
+]]
+function wasClicked(self, nClickX, nClickY)
+    return nClickX >= self.x and nClickX <= self.x + self.nWidth - 1 and
+           nClickY >= self.y and nClickY <= self.y + self.nHeight - 1,
+           self
+end
+--handleClick-------------------------------------
+function handleClick(self, nClickX, nClickY)
+    return self
+end
+--render------------------------------------------
+function render(self)
+    return self
+end
+--new---------------------------------------------
+function new(x, y, nWidth, nHeight, bIsClickable)
+    return setmetatable({
+        x = x or 1,
+        y = y or 1,
+
+        nWidth  = nWidth or 1,
+        nHeight = nHeight or 1,
+
+        bIsClickable = bIsClickable or false
+    }, tGraphicalObjectMetatable)
+end
+--------------------------------------------------

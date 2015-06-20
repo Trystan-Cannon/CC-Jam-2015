@@ -1,0 +1,102 @@
+--[[
+    Layer           Trystan Cannon
+                    19 June 2015
+
+        The base Layer class is used to direct the
+    design of all other layers as well as provide
+    a standard interface for layer interactions.
+
+        Each layer MUST return an instantiation
+    of itself at the end of its file.
+
+        Layers receive events only when they are summoned.
+    However, layers can be registered to receive certain
+    events while they are hidden away, too.
+
+    Layer interfaces?
+        Layers need a single, main graphical interface.
+        However, some programmers might want to create
+        several gui's with which the user should interact.
+
+        So, each layer should have a single main interaction
+        interface that is summoned from the hotkey?
+        Or, should all of interfaces be summoned at the same time?
+        Of course, though, the user might want to summon
+        a few gui's while leaving a few in the hole, waiting to
+        be called up.
+]]
+--Main Entry Point--------------------------------
+local tLayerMetatable = { __index = getfenv() }
+--setChild----------------------------------------
+function setChild(tChildClass)
+    setmetatable(tChildClass, tLayerMetatable)
+end
+--getInterfaces-----------------------------------
+function getInterfaces(self)
+    return self.tInterfaces
+end
+--getRegisteredEvents-----------------------------
+function getRegisteredEvents(self)
+    return self.tRegisteredEvents
+end
+--registerEvent-----------------------------------
+function registerEvent(self, sEventName)
+    self[sEventName] = true
+end
+--unregisterEvent---------------------------------
+function unregisterEvent(self, sEventName)
+    self[sEventName] = nil
+end
+--isEventRegistered-------------------------------
+function isEventRegistered(self, sEventName)
+    return self[sEventName]
+end
+--getHotkeyChar-----------------------------------
+function getHotkey(self)
+    return self.nHotkey
+end
+--getName-----------------------------------------
+function getName(self)
+    return self.sName
+end
+--isSummoned--------------------------------------
+function isSummoned(self)
+    return self.bIsSummoned
+end
+--summon------------------------------------------
+function summon(self)
+    self.bIsSummoned = true
+end
+--hide--------------------------------------------
+function hide(self)
+    self.bIsSummoned = false
+end
+--update------------------------------------------
+--[[
+    Handles interaction between user generated events
+    and the interfaces of the layer.
+
+    self
+        The layer object being interacted with.
+    ...
+        The event data to be handled.
+]]
+function update(self, ...)
+end
+--new---------------------------------------------
+--[[
+    Creates and returns a new, basic layer object.
+
+    @constructor
+]]
+function new(sName, nHotkey)
+    return setmetatable({
+        tInterfaces       = {},      -- All graphical interfaces with which the user interacts.
+        tRegisteredEvents = {},      -- All events which this layer receives when not summoned. tRegisteredEvents[sEventName] = true
+        nHotkey           = nHotkey, -- Character event triggered to summon this layer.
+        sName             = sName,   -- The name of this layer. This does not have to be unique.
+
+        bIsSummoned = false -- Whether or not this layer is currently summoned.
+    }, tLayerMetatable)
+end
+--------------------------------------------------
