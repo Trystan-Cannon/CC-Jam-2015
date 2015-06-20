@@ -16,8 +16,8 @@ Layers, while possessing the ability to behave like traiditional "OS" programs, 
     
 This ease of usage is the primary goal of Layers. While simplifying complex tasks and allowing quick and responsive access to higher level programs, Layers does not take away from the traditional shell experience. Most OS's sit on top of the original Craft OS, giving the user a clickable interface which takes away the joy of using the command line, searching for and creating files, running programs and manipulating code in a comfortable yet simplistic setting. Layers works behind the scenes, providing services that make otherwise painful or tedious tasks quick and simple. One can just press a hotkey, interact with a "layer," and be back to their command line in seconds, having accomplished something that would otherwise take distracting amounts of time.
 
-Well, how does it work?
-    Check out the usage documentation ;)
+#Well, how does it work?
+Check out the usage documentation ;)
 
-Alright. But how do I make a new layer?
-    That's also in the usage documentation, silly ;)
+#Alright. But how do I make a new layer?
+That's also in the usage documentation, silly ;)
