@@ -3,7 +3,7 @@ Trystan Cannon
 19 June 2015
 CC Jam 2015 Project
 
-    Layers is a simple system that creates a seemless integration of background "widget" like programs and the default shell of the user's choosing.
+Layers is a simple system that creates a seemless integration of background "widget" like programs and the default shell of the user's choosing.
 
 #What is a layer?
 A "layer" is simply a Lua program which runs aside the top "layer," or program, in a separate coroutine, waiting for the user to summon it to the
