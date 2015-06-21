@@ -1,0 +1,80 @@
+--[[
+    TextBox         Trystan Cannon
+                    21 June 2015
+
+        TextBoxes are GraphicalObjects
+    that simply display text to the user.
+]]
+--Loading APIs------------------------------------
+if not GraphicalObject then
+    os.loadAPI("/Layers/Classes/Graphics/GraphicalObject")
+end
+
+GraphicalObject.setChild(getfenv())
+local tTextBoxMetatable = { __index= getfenv() }
+--getLabel----------------------------------------
+function getLabel(self)
+    return self.sLabel
+end
+--setLabel----------------------------------------
+function setLabel(self, sLabel)
+    self.sLabel = sLabel or self.sLabel
+end
+--getWidth----------------------------------------
+function getWidth(self, ...)
+    return self.nWidth == -1 and (type(self.sLabel) == "function" and self.sLabel():len() or self.sLabel:len()) or self.nWidth
+end
+--render------------------------------------------
+function render(self, ...)
+    term.setBackgroundColor(self.nBackColor)
+    term.setTextColor(self.nTextColor)
+
+    -- Make local copies of the object's properties to
+    -- speed up rendering just a tiny, tiny bit.
+    local nWidth  = self:getWidth()
+    local nHeight = self.nHeight
+    local x       = self.x
+    local y       = self.y
+    local sLabel  = type(self.sLabel) == "function" and self.sLabel() or self.sLabel
+
+    -- Create the box.
+    for nLine = y, y + nHeight - 1 do
+        term.setCursorPos(x, nLine)
+        term.write(string.rep(" ", nWidth))
+    end
+
+    local tText = GraphicalObject.wrapText(sLabel, nWidth)
+
+    for nLine = 1, math.min(nHeight, #tText) do
+        term.setCursorPos(x, y + nLine - 1)
+        term.write(tText[nLine])
+    end
+end
+--new---------------------------------------------
+--[[
+    Creates and returns a new TextBox object.
+
+    NOTE: If desired, one may leave the 'nWidth' field
+          'nil,' making the width of the textbox the width
+          of the given label.
+
+    NOTE: If the height of the text box is greater than the
+          number of lines that the label will provide, then
+          the label is centered, as accurately as possible,
+          on the text box when rendered.
+
+    NOTE: The label given can also be a function that returns a string, so
+          a label can update itself each time it's drawn.
+
+    @constructor
+]]
+function new(x, y, nWidth, nHeight, sLabel, nTextColor, nBackColor)
+    local self = setmetatable(GraphicalObject.new(x, y, nWidth or -1, nHeight), tTextBoxMetatable)
+
+    self.sLabel     = sLabel or "Text Box"
+    self.nTextColor = nTextColor or colors.white
+    self.nBackColor = nBackColor or colors.black
+
+    return self
+end
+--------------------------------------------------

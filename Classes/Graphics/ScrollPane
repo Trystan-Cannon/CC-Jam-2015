@@ -1,0 +1,66 @@
+--[[
+    ScrollPane      Trystan Cannon
+                    21 June 2015
+
+        A Scroll Pane object is a graphical
+    component that contains a list of other
+    graphical objects.
+
+    To implement this, I'm not sure if I should
+    make the list all just basic graphical objects,
+    or require the list to be text boxes.
+
+    The reason being is that controllign the rendering
+    of each of the graphical objects is kind of difficult
+    because I can't exactly render only a portion of the
+    object.
+
+    For example, if the scroll pane was to show only
+    the top line of a button, I don't know how, with the
+    current system, to only render the top of the bottom.
+
+    This might accomplished by rendering a container
+    around the rendered components, essentially covering
+    the pieces that exceed the boundaries of the container.
+
+    However, this would require redrawing the entirety of the
+    screen or, more accurately, all of the screen surrounding
+    the container because some graphical objects might be
+    so large that they go way, way outside of the desired
+    boundaries of the container.
+
+    2 hours to go....
+]]
+--Loading APIs------------------------------------
+if not GraphicalObject then
+    os.loadAPI("/Layers/Classes/Graphics/GraphicalObject")
+end
+
+GraphicalObject.setChild(getfenv())
+local tScrollPaneMetatable = { getfenv() }
+--render------------------------------------------
+--new---------------------------------------------
+--[[
+    Creates and returns a new Scroll Pane object that
+    lists the given graphical objects.
+
+    However, the graphical objects will be repositioned
+    such that they stack vertically.
+]]
+function new(x, y, nWidth, nHeight, ...)
+    local self              = setmetatable(GraphicalObject.new(x, y, nWidth, nHeight), tScrollPaneMetatable)
+    local tGraphicalObjects = { ... }
+    local nLastY            = 1
+
+    self.tGraphicalObjects = {}
+
+    for key, tGraphicalObject in pairs(tGraphicalObjects) do
+        tGraphicalObject.y          = nLastY
+        self.tGraphicalObjects[key] = tGraphicalObject
+
+        nLastY = nLastY + tGraphicalObject.nHeight
+    end
+
+    return self
+end
+--------------------------------------------------

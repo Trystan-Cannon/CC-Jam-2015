@@ -81,6 +81,22 @@ function adjustClickForBuffer(nClickX, nClickY, tBuffer)
         nClickX - tBuffer.x + 1,
         nClickY - tBuffer.y + 1
 end
+--wrapText----------------------------------------
+--[[
+    Returns a table of strings which are 'nWidth'
+    length lines of the split 'sText.'
+]]
+function wrapText(sText, nWidth)
+    local tText = {}
+
+    while sText:len() >= nWidth do
+        table.insert(tText, sText:sub(1, nWidth))
+        sText = sText:sub(nWidth + 1)
+    end
+    table.insert(tText, sText)
+
+    return tText
+end
 --wasClicked--------------------------------------
 --[[
     The click check is a simple rectangular check.

@@ -44,16 +44,20 @@ function getBuffer(self)
 end
 --getGraphicalObjects-----------------------------
 function getGraphicalObjects(self)
-    return tGraphicalObjects
+    return self.tGraphicalObjects
 end
 --addGraphicalObject------------------------------
-function addGraphicalObject(self, tGraphicalObject)
+function addGraphicalObject(self, tGraphicalObject, key)
     --if not getmetatable(getmetatable(tGraphicalObject)).__index == GraphicalObject then
     --    error("Cannot add a non-graphical object to this interface.")
     --    return
     --end
 
-    table.insert(self.tGraphicalObjects, tGraphicalObject)
+    if key then
+        self.tGraphicalObjects[key] = tGraphicalObject
+    else
+        table.insert(self.tGraphicalObjects, tGraphicalObject)
+    end
 end
 --update------------------------------------------
 function update(self, ...)
@@ -73,7 +77,7 @@ function update(self, ...)
         tEventData[4] = nAdjustedY
     end
 
-    for _, tGraphicalObject in ipairs(self.tGraphicalObjects) do
+    for _, tGraphicalObject in pairs(self.tGraphicalObjects) do
         tGraphicalObject:update(unpack(tEventData))
     end
 end
@@ -83,7 +87,7 @@ function render(self)
 
     -- Render all of the graphical objects to the
     -- buffer, then render the buffer.
-    for _, tGraphicalObject in ipairs(self.tGraphicalObjects) do
+    for sKey, tGraphicalObject in pairs(self.tGraphicalObjects) do
         tGraphicalObject:render()
     end
 
@@ -105,9 +109,3 @@ function new(nWidth, nHeight, x, y)
     }, tInterfaceMetatable)
 end
 --------------------------------------------------
-
--- TODO:
---     Make graphical objects that are part of an interface clickable.
---     In doing so, make use of GraphicalObject.adjustClickForBuffer so
---     buttons know what to do. All graphical objects that are part of
---     the interface are positioned relative to the buffer.

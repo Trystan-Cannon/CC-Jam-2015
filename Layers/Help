@@ -25,6 +25,12 @@ end
 if not Button then
     os.loadAPI("/Layers/Classes/Graphics/Button")
 end
+if not TextBox then
+    os.loadAPI("/Layers/Classes/Graphics/TextBox")
+end
+if not ScrollPane then
+    os.loadAPI("/Layers/Classes/Graphics/ScrollPane")
+end
 
 Layer.setChild(getfenv())
 local tHelpMetatable = { __index = getfenv() }
@@ -43,25 +49,77 @@ function update(self, ...)
         return
     end
 
-    self:getInterfaces()[1]:update(...)
-    self:getInterfaces()[1]:render()
+    self:getInterfaces().tMainInterface:update(...)
+    self:getInterfaces().tMainInterface:render()
+    
+    if self.bShowAboutInterface then
+        self:getInterfaces().tAboutInterface:update(...)
+        self:getInterfaces().tAboutInterface:render()
+    end
 end
 --new---------------------------------------------
 function new()
-    local self           = setmetatable(Layer.new("Help", keys.h), tHelpMetatable)
-    local tMainInterface = Interface.new(25, 5, 1, 2)
+    local self                  = setmetatable(Layer.new("Help", keys.h), tHelpMetatable)
+    local tMainInterface        = Interface.new(25, 5, 1, 2)
+    local tAboutInterface       = Interface.new(25, 15, Layers.SCREEN_WIDTH - 24, 3)
+    local tAboutInterfaceBuffer = tAboutInterface:getBuffer()
 
-    -- The coordinates of the button are relative to the interface on which it exists.
-    local tButton = Button.new(2, 2, 15, 3, "This is a test of line wrapping.", colors.white, colors.orange)
-    tMainInterface:addGraphicalObject(tButton)
+    self.bShowAboutInterface = false
 
-    tMainInterface:getBuffer():setBackgroundColor(colors.cyan)
+    --------------------------------------------------
+    -- Initialize the main interface.
+    tMainInterface:getBuffer():setBackgroundColor(colors.gray)
     tMainInterface:getBuffer():clear()
 
-    tMainInterface:getBuffer():setCursorPos(7, 3)
-    tMainInterface:getBuffer():write("Help Layer")
+    -- Create graphical components for the main interface.
+    local tHelpLayerTextBox = TextBox.new(2, 2, nil, 1, "Help Layer", colors.white, colors.gray)
 
-    table.insert(self.tInterfaces, tMainInterface)
+    local sAboutAccessLabel  = " About "
+    local tAboutAccessButton = Button.new(tMainInterface:getBuffer().nWidth - sAboutAccessLabel:len() - 1, 2, sAboutAccessLabel:len(),
+                                          3, sAboutAccessLabel, colors.white, colors.lightGray, true)
+
+    tAboutAccessButton.act = function()
+        -- If the about interface is going to be hidden, then
+        -- we'll need to refresh the main buffer to hide it.
+        if self.bShowAboutInterface then
+            Layers.refreshScreen()
+        end
+
+        self.bShowAboutInterface = not self.bShowAboutInterface
+    end
+    --------------------------------------------------
+    -- Initialize the about interface.
+    tAboutInterfaceBuffer:setBackgroundColor(colors.gray)
+    tAboutInterfaceBuffer:clear()
+
+    -- Create text boxes for the about interface.
+    local tAuthorTextBox      = TextBox.new(2, 2, nil, 1, "Author : Grim Reaper", colors.white, colors.gray)
+    local tVersionTextBox     = TextBox.new(2, 3, nil, 1, "Version: 1.0", colors.white, colors.gray)
+    local tDescriptionTextBox = TextBox.new(2, 5, tAboutInterface:getBuffer().nWidth - 2, tAboutInterface:getBuffer().nHeight - 5,
+        "    \"Layers\" is a simple system that creates a seemless integration of background \"widget\" like programs and the default shell of the user's choosing.",
+    colors.white, colors.gray)
+    --------------------------------------------------
+
+    --[[
+        TODO:
+            + Make a list of currently loaded layers.
+            + Have this list presented in some kind of scrollable pane.
+    ]]
+
+    --------------------------------------------------
+    -- Add graphical components to the main interface.
+    tMainInterface:addGraphicalObject(tHelpLayerTextBox, "tHelpLayerTextBox")
+    tMainInterface:addGraphicalObject(tAboutAccessButton, "tAboutAccessButton")
+    --------------------------------------------------
+    -- Add graphical components to the about interface.
+    tAboutInterface:addGraphicalObject(tAuthorTextBox, "tAuthorTextBox")
+    tAboutInterface:addGraphicalObject(tVersionTextBox, "tVersionTextBox")
+    tAboutInterface:addGraphicalObject(tDescriptionTextBox, "tDescriptionTextBox")
+    --------------------------------------------------
+    -- Add interfaces to thelayer.
+    self.tInterfaces.tMainInterface  = tMainInterface
+    self.tInterfaces.tAboutInterface = tAboutInterface
+
     return self
 end
 --Main Entry Point--------------------------------

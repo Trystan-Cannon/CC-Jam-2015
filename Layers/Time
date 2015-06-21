@@ -7,8 +7,8 @@
     desired format. This format is a preference
     that is adjustable via file setting.
 
-        In future, the setting will be adjustable
-    from the layer itself.
+    Hotkey:
+        - Alt + T
 ]]
 --Load APIs---------------------------------------
 if not Layer then
@@ -16,6 +16,12 @@ if not Layer then
 end
 if not Interface then
     os.loadAPI("/Layers/Classes/Interface")
+end
+if not Button then
+    os.loadAPI("/Layers/Classes/Graphics/Button")
+end
+if not TextBox then
+    os.loadAPI("/Layers/Classes/Graphics/TextBox")
 end
 
 Layer.setChild(getfenv())
@@ -34,28 +40,34 @@ function update(self, ...)
     if not self:isSummoned() then
         return
     end
-    -- Have some setup for switching off and on the time format preference.
-    -- Use a button API. We'll make that later.
 
-    -- Redraw the time.
-    local tBuffer = self.tInterfaces[1]:getBuffer()
+    self.tInterfaces[1]:update(...)
+    self.tInterfaces[1]:render()
 
-    tBuffer:setBackgroundColor(colors.cyan)
-    tBuffer:setTextColor(colors.white)
-    tBuffer:clear()
-
-    local sTime = textutils.formatTime(os.time(), true)
-    tBuffer:setCursorPos(tBuffer.nWidth / 2 - sTime:len() / 2, 2)
-    tBuffer:write(sTime)
-
-    tBuffer:render()
-
+    -- Queue an event to update ourselves, so we can refresh the time text box.
     os.queueEvent("Time layer update.")
 end
 --new---------------------------------------------
 function new()
     local self           = setmetatable(Layer.new("Time", keys.t), tTimeMetatable)
     local tMainInterface = Interface.new(15, 3, Layers.tBaseTerminal.getSize() - 14, 2)
+
+    local sFormatLabel  = " "
+    local tFormatButton = Button.new(2, 2, sFormatLabel:len(), 1, sFormatLabel, colors.white, colors.lightGray, false)
+    local tTimeTextBox  = TextBox.new(4, 2, 13, 1, function() return textutils.formatTime(os.time(), self.bTwentyFourHour) end, colors.white, colors.gray)
+
+    tFormatButton.act = function()
+        self.bTwentyFourHour = not self.bTwentyFourHour
+    end
+
+    -- Initialize settings.
+    self.bTwentyFourHour = true
+
+    tMainInterface:getBuffer():setBackgroundColor(colors.gray)
+    tMainInterface:getBuffer():clear()
+
+    tMainInterface:addGraphicalObject(tFormatButton, "tFormatButton")
+    tMainInterface:addGraphicalObject(tTimeTextBox, "tTimeTextBox")
 
     table.insert(self.tInterfaces, tMainInterface)
     return self

@@ -24,35 +24,31 @@ function render(self)
         term.write(string.rep(" ", self:getWidth()))
     end
 
-    -- Wrap text.
-    local tText   = {}
     local sLabel  = self.sLabel
     local nWidth  = self:getWidth()
     local nHeight = self:getHeight()
     local y       = self:getY()
     local x       = self:getX()
-
-    while sLabel:len() > nWidth do
-        table.insert(tText, sLabel:sub(1, nWidth - 2))
-        sLabel = sLabel:sub(nWidth - 1)
-    end
+    local tText   = GraphicalObject.wrapText(sLabel, nWidth)
 
     for nLine = 1, math.min(nHeight, #tText) do
-        term.setCursorPos(x + 1, y + nLine - 1)
+        term.setCursorPos(x, y + nLine - (self.bBorderVertically and 0 or 1))
         term.write(tText[nLine])
     end
-
-    if sLabel:len() > 0 and #tText < nHeight then
-        term.setCursorPos(x + 1, y + #tText)
-        term.write(sLabel)
-    end
+end
+--act---------------------------------------------
+--[[
+    By default, this is called when this button is
+    clicked.
+]]
+function act(self, ...)
 end
 --uppdate-----------------------------------------
 function update(self, ...)
     local tEventData = { ... }
 
     if tEventData[1] == "mouse_click" and self:wasClicked(tEventData[3], tEventData[4]) then
-        -- Put your code here...
+        self:act(...)
     end
 end
 --new---------------------------------------------
@@ -66,12 +62,13 @@ end
 
     @constructor
 ]]
-function new(x, y, nWidth, nHeight, sLabel, nTextColor, nBackColor)
+function new(x, y, nWidth, nHeight, sLabel, nTextColor, nBackColor, bBorderVertically)
     local self = setmetatable(GraphicalObject.new(x, y, nWidth, nHeight), tButtonMetatable)
 
-    self.sLabel     = sLabel or "Button"
-    self.nTextColor = nTextColor or colors.black
-    self.nBackColor = nBackColor or colors.white
+    self.sLabel            = sLabel or "Button"
+    self.nTextColor        = nTextColor or colors.black
+    self.nBackColor        = nBackColor or colors.white
+    self.bBorderVertically = bBorderVertically
 
     return self
 end

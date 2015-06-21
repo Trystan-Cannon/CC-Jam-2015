@@ -23,6 +23,7 @@
     TODO:
         + Make a whole god-damn GUI system -> buttons, etc.
         + Make a simple install script -> We need to make sure all directories/files are in place.
+        + Make the loading of all classes/apis definite and centralized... That way, we don't need absolute paths.
         ~ Maybe make a how-to-use animation like Windows 8 has, you know?
 
     AS ALWAYS:
@@ -42,8 +43,46 @@ tBaseTerminal            = term.current()              -- The base terminal obje
 nHotkeyTimeoutTime       = 0.25                        -- The amount of time between an ALT press and when the program stops listening for a hotkey.
 nReturnKey               = keys.home                   -- The key that is pressed to minimize a layer and return to the base program.
 sFrontLayerRequestEvent  = "Front Layer Request"       -- The event name that signifies a layer requesting to be the front layer.
+sFirstBootRecordPath     = sLayersHomeDir .. ".firstboot"
+
+SCREEN_WIDTH, SCREEN_HEIGHT = tBaseTerminal.getSize() -- The native dimensions of the terminal.
 --APIs--------------------------------------------
 os.loadAPI(sLayersHomeDir .. "Buffer")
+tMainBuffer = Buffer.new(SCREEN_WIDTH, SCREEN_HEIGHT, 1, 1, term.current()) -- Central screen buffer for all drawing to the screen.
+--recordFirstBoot---------------------------------
+--[[
+    Creates a file at 'sFirstBootRecordPath' to signify
+    that the user has already booted the layers system once.
+]]
+function recordFirstBoot()
+    local tFileHandle = fs.open(sFirstBootRecordPath, 'w')
+
+    if tFileHandle then
+        tFileHandle.writeLine("System already booted. Nice.")
+        tFileHandle.close()
+    else
+        return false
+    end
+
+    return true
+end
+--getMainBuffer-----------------------------------
+--[[
+    Returns the main buffer used for drawing in the layers system.
+]]
+function getMainBuffer()
+    return tMainBuffer
+end
+--refreshScreen-----------------------------------
+--[[
+    Redraws the main buffer.
+
+    Basically, the base program's last frame is redrawn over
+    the screen.
+]]
+function refreshScreen()
+    tMainBuffer:render()
+end
 --generateEnvironment-----------------------------
 --[[
     Creates and returns an environment table with access to the _G table
@@ -110,12 +149,14 @@ local function loadLayers(tContainer, sLayersPath)
             if bSuccess and tLayer then
                 table.insert(tContainer, tLayer)
                 print(tLayer:getName() .. " loaded.")
+            else
+                printError("Error loading " .. sFileName .. ":\n" .. tostring(tLayer))
             end
         end
     end
 
     print("Pausing for readability...")
-    sleep(1)
+    sleep(2)
 end
 --isHotkey----------------------------------------
 --[[
@@ -155,15 +196,15 @@ local function distributeEvents(tLayers, tEventData)
     end
 end
 --Main Entry Point--------------------------------
-local SCREEN_WIDTH, SCREEN_HEIGHT = term.native().getSize()
-local tMainBuffer                 = Buffer.new(SCREEN_WIDTH, SCREEN_HEIGHT, 1, 1, term.current()) -- Central screen buffer for all drawing to the screen.
-
--- Setup the buffer to draw to the screen at the same time as it writes to itself.
---tMainBuffer:clear(true)
-
 local cStartupThread      = createThread(sStartupPath) or createThread(sDefaultStartupPath) -- Thread for the desired startup program. 'nil' if there is none.
 local tFrontLayer         = nil                                                             -- The currently focused layer. This will be 'nil' if there is none.
 local tLayers             = {}                                                              -- All "layers" that are currently alive.
+
+-- If this is the first boot of the layers system, offer the user a tour.
+if not fs.exists(sFirstBootRecordPath) then
+    -- TODO: Tour stuff.
+    recordFirstBoot()
+end
 
 -- Load layers from the layers directory. Layers that failed to load will be receive
 -- a log entry, but their failure will not crash the program. Simply, they will not
@@ -172,104 +213,106 @@ loadLayers(tLayers, sLayersDirPath)
 
 term.redirect(tMainBuffer:redirect())
 print("Terminal redirected to buffer.")
+
 -- Initialize the startup thread.
 coroutine.resume(cStartupThread)
-
 term.redirect(tBaseTerminal)
 tMainBuffer:render()
 
 local bIsRunning = coroutine.status(cStartupThread) ~= "dead" -- Whether or not the underlying startup thread is still running.
+--Main Function Loop------------------------------
+local function main()
+    -- Main program loop: executes as long as the startup thread is alive.
+    while bIsRunning do
+        term.redirect(tMainBuffer:redirect())
+        local tEventData = { os.pullEvent() }
 
--- Main program loop: executes as long as the startup thread is alive.
-while bIsRunning do
-    term.redirect(tMainBuffer:redirect())
-    local tEventData = { os.pullEvent() }
+        if tEventData[1] == sFrontLayerRequestEvent and tEventData[2] ~= tFrontLayer and isRequestOriginal(tFrontLayerRequests, tEventData[2]) then
+            table.insert(tFrontLayerRequests, tEventData[2])
+        end
 
-    if tEventData[1] == sFrontLayerRequestEvent and tEventData[2] ~= tFrontLayer and isRequestOriginal(tFrontLayerRequests, tEventData[2]) then
-        table.insert(tFrontLayerRequests, tEventData[2])
-    end
+        -- Alt pressed -> Hotkey inbound, maybe.
+        if tEventData[1] == "key" and (tEventData[2] == keys.leftAlt or tEventData[2] == keys.rightAlt) then
+            --[[
+                Hotkey system:
+                    Alt pressed -> start a short timer to wait for the hotkey to be pressed
+                    Catch any events being fired while the timer runs
+                    Distribute non-hotkey or hotkey timer events back to the startup thread
+                    Hotkey pressed?
+                        Do hotkey stuff
+                    Hotkey timer fires?
+                        Maybe remove alt key press. However, it could have been intended.
+                        Break the loop and return to normal functions.
+            ]]
 
-    -- Alt pressed -> Hotkey inbound, maybe.
-    if tEventData[1] == "key" and (tEventData[2] == keys.leftAlt or tEventData[2] == keys.rightAlt) then
-        --[[
-            Hotkey system:
-                Alt pressed -> start a short timer to wait for the hotkey to be pressed
-                Catch any events being fired while the timer runs
-                Distribute non-hotkey or hotkey timer events back to the startup thread
-                Hotkey pressed?
-                    Do hotkey stuff
-                Hotkey timer fires?
-                    Maybe remove alt key press. However, it could have been intended.
-                    Break the loop and return to normal functions.
-        ]]
+            local tHotkeyTimer = os.startTimer(nHotkeyTimeoutTime)
+            local _tEventData  = { os.pullEvent() }
 
-        local tHotkeyTimer = os.startTimer(nHotkeyTimeoutTime)
-        local _tEventData  = { os.pullEvent() }
+            while not (_tEventData[1] == "timer" and _tEventData[2] == tHotkeyTimer) do
+                local tLayerSummoned = isHotkey(tLayers, _tEventData[2]) -- 'nil' if there was no corresponding hotkey.
 
-        while not (_tEventData[1] == "timer" and _tEventData[2] == tHotkeyTimer) do
-            local tLayerSummoned = isHotkey(tLayers, _tEventData[2]) -- 'nil' if there was no corresponding hotkey.
+                if _tEventData[1] == "key" and tLayerSummoned then
+                    -- Make sure the catch feature times out after a very short period to prevent the
+                    -- computer from hanging. There's probably a MUCH better way to do this.
+                    local tCatchTimer = os.startTimer(0.1)
 
-            if _tEventData[1] == "key" and tLayerSummoned then
-                -- Make sure the catch feature times out after a very short period to prevent the
-                -- computer from hanging. There's probably a MUCH better way to do this.
-                local tCatchTimer = os.startTimer(0.1)
+                    -- Attempt to catch the stray 'char' event that fires when a letter key is pressed.
+                    -- However, if the event caught is not a 'char' then we'll requeue it.
+                    local tCaughtEvent = { os.pullEvent() }
+                    if tCaughtEvent[1] ~= "char" and tCaughtEvent[1] ~= "timer" and tCaughtEvent[2] ~= tCatchTimer then
+                        os.queueEvent(unpack(tCaughtEvent))
+                    end
 
-                -- Attempt to catch the stray 'char' event that fires when a letter key is pressed.
-                -- However, if the event caught is not a 'char' then we'll requeue it.
-                local tCaughtEvent = { os.pullEvent() }
-                if tCaughtEvent[1] ~= "char" and tCaughtEvent[1] ~= "timer" and tCaughtEvent[2] ~= tCatchTimer then
-                    os.queueEvent(unpack(tCaughtEvent))
+                    -- Summon the layer.
+                    tLayerSummoned:summon()
+                    tFrontLayer = tLayerSummoned
+
+                    -- Nullify the event.
+                    tEventData = {}
+                    break
                 end
 
-                -- Summon the layer.
-                tLayerSummoned:summon()
-                tFrontLayer = tLayerSummoned
+                coroutine.resume(cStartupThread, unpack(_tEventData))
+                _tEventData = { os.pullEvent() }
+            end
+        end
 
-                -- Nullify the event.
-                tEventData = {}
+        -- Layer brought to the front.
+        while tFrontLayer ~= nil do
+            local tLayerEventData = { os.pullEvent() }
+
+            if tLayerEventData[1] == "key" and tLayerEventData[2] == nReturnKey then
+                -- Refresh the screen to clear away the layer.
+                tFrontLayer:hide()
+                tFrontLayer = nil
+
                 break
             end
 
-            coroutine.resume(cStartupThread, unpack(_tEventData))
-            _tEventData = { os.pullEvent() }
-        end
-    end
-
-    --[[
-        Prevailing hypothesis:
-            The redirection code in the Buffer API is not written properly for recording.
-            Or, you know, something could be happening as the layers attempt to draw to
-            the base terminal, affecting the main buffer somehow. Or, the user sees a change
-            in the base terminal which the main buffer does not reflect. Something doesn't
-            redirect properly...
-    ]]
-
-    -- Layer brought to the front.
-    while tFrontLayer ~= nil do
-        local tLayerEventData = { os.pullEvent() }
-
-        if tLayerEventData[1] == "key" and tLayerEventData[2] == nReturnKey then
-            -- Refresh the screen to clear away the layer.
-            tFrontLayer:hide()
-            tFrontLayer = nil
-
-            break
+            distributeEvents(tLayers, tLayerEventData)
         end
 
-        distributeEvents(tLayers, tLayerEventData)
+        coroutine.resume(cStartupThread, unpack(tEventData))
+        term.redirect(tBaseTerminal) -- This is probably unnecessary.
+        tMainBuffer:render()
+
+        distributeEvents(tLayers, tEventData)
+
+        -- Update the health of the system. However, if something has already killed us
+        -- (set bIsRunning to false), then do not change the status.
+        bIsRunning = bIsRunning and coroutine.status(cStartupThread) ~= "dead"
     end
-
-    coroutine.resume(cStartupThread, unpack(tEventData))
-    term.redirect(tBaseTerminal) -- This is probably unnecessary.
-    tMainBuffer:render()
-
-    distributeEvents(tLayers, tEventData)
-
-    -- Update the health of the system. However, if something has already killed us
-    -- (set bIsRunning to false), then do not change the status.
-    bIsRunning = bIsRunning and coroutine.status(cStartupThread) ~= "dead"
 end
+--------------------------------------------------
+local bSuccess, sError = pcall(main)
 
 term.redirect(tMainBuffer.tTerm) -- Just in case.
 print("Terminal restored.")
+
+if not bSuccess then
+    printError("Error occurred during execution:\n" .. sError)
+else
+    term.setTextColor(colors.lime)
+    print("Executed successfully.")
+end
 --------------------------------------------------
