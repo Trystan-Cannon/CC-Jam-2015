@@ -12,9 +12,8 @@
         + x and y positions (top left corner of the object)
         + 'render' function which draws the object to the screen
         + width and height of the object (bounding box for circles, etc.)
-        + boolean designating if the object is clickable
         + 'wasClicked' function to determine if the object was clicked based on click coordinates
-        + 'handleClick' function to handle a click given the click's coordinates
+        + 'update' function to handle any kind of event related data, responding accordingly.
 
     All functions native to the Graphical Object parent
     class return the object as well as any other
@@ -68,14 +67,19 @@ function setHeight(self, nHeight)
 
     return self
 end
---isClickable-------------------------------------
-function isClickable(self)
-    return self.bIsClickable, self
-end
---setClickable------------------------------------
-function setClickable(self, bIsClickable)
-    self.bIsClickable = bIsClickable
-    return self
+--adjustClickForBuffer----------------------------
+--[[
+    Manipulates the values of the click coordinates
+    to be accurate to a buffer's position.
+
+    This way, a click that is at (25, 10) but is
+    the top left corner of a buffer will appear
+    as (1, 1).
+]]
+function adjustClickForBuffer(nClickX, nClickY, tBuffer)
+    return
+        nClickX - tBuffer.x + 1,
+        nClickY - tBuffer.y + 1
 end
 --wasClicked--------------------------------------
 --[[
@@ -86,8 +90,8 @@ function wasClicked(self, nClickX, nClickY)
            nClickY >= self.y and nClickY <= self.y + self.nHeight - 1,
            self
 end
---handleClick-------------------------------------
-function handleClick(self, nClickX, nClickY)
+--udpate------------------------------------------
+function update(self, ...)
     return self
 end
 --render------------------------------------------
@@ -95,15 +99,13 @@ function render(self)
     return self
 end
 --new---------------------------------------------
-function new(x, y, nWidth, nHeight, bIsClickable)
+function new(x, y, nWidth, nHeight)
     return setmetatable({
         x = x or 1,
         y = y or 1,
 
         nWidth  = nWidth or 1,
         nHeight = nHeight or 1,
-
-        bIsClickable = bIsClickable or false
     }, tGraphicalObjectMetatable)
 end
 --------------------------------------------------

@@ -42,6 +42,54 @@ end
 function getBuffer(self)
     return self.tBuffer
 end
+--getGraphicalObjects-----------------------------
+function getGraphicalObjects(self)
+    return tGraphicalObjects
+end
+--addGraphicalObject------------------------------
+function addGraphicalObject(self, tGraphicalObject)
+    --if not getmetatable(getmetatable(tGraphicalObject)).__index == GraphicalObject then
+    --    error("Cannot add a non-graphical object to this interface.")
+    --    return
+    --end
+
+    table.insert(self.tGraphicalObjects, tGraphicalObject)
+end
+--update------------------------------------------
+function update(self, ...)
+    local tEventData = { ... }
+    local sEventName = tEventData[1]
+
+    -- Adjust any clicks for the graphical objects, so
+    -- they receive the relative coordinates of the click.
+    if sEventName == "mouse_click" or sEventName == "mouse_scroll" or
+       sEventName == "mouse_drag"
+    then
+        -- The index in the event data table for the x and y coordinates
+        -- of the click are always 3 and 4, respectively.
+        local nAdjustedX, nAdjustedY = GraphicalObject.adjustClickForBuffer(tEventData[3], tEventData[4], self.tBuffer)
+
+        tEventData[3] = nAdjustedX
+        tEventData[4] = nAdjustedY
+    end
+
+    for _, tGraphicalObject in ipairs(self.tGraphicalObjects) do
+        tGraphicalObject:update(unpack(tEventData))
+    end
+end
+--render------------------------------------------
+function render(self)
+    local tCurrentTerm = term.redirect(self.tBuffer:redirect())
+
+    -- Render all of the graphical objects to the
+    -- buffer, then render the buffer.
+    for _, tGraphicalObject in ipairs(self.tGraphicalObjects) do
+        tGraphicalObject:render()
+    end
+
+    term.redirect(tCurrentTerm)
+    self.tBuffer:render()
+end
 --new---------------------------------------------
 --[[
     Creates and returns a new interface object.
@@ -57,3 +105,9 @@ function new(nWidth, nHeight, x, y)
     }, tInterfaceMetatable)
 end
 --------------------------------------------------
+
+-- TODO:
+--     Make graphical objects that are part of an interface clickable.
+--     In doing so, make use of GraphicalObject.adjustClickForBuffer so
+--     buttons know what to do. All graphical objects that are part of
+--     the interface are positioned relative to the buffer.

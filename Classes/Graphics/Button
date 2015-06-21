@@ -1,6 +1,10 @@
 --[[
     Button          Trystan Cannon
                     20 June 2015
+
+        Simple button class that is a child
+    of the GraphicalObject class, making it usable
+    throughout the Layers system.
 ]]
 --Loading APIs------------------------------------
 if not GraphicalObject then
@@ -9,6 +13,48 @@ end
 
 GraphicalObject.setChild(getfenv())
 local tButtonMetatable = { __index = getfenv() }
+--render------------------------------------------
+function render(self)
+    term.setBackgroundColor(self.nBackColor)
+    term.setTextColor(self.nTextColor)
+
+    -- Draw the background for the button.
+    for y = self:getY(), self:getHeight() + 1 do
+        term.setCursorPos(self:getX(), y)
+        term.write(string.rep(" ", self:getWidth()))
+    end
+
+    -- Wrap text.
+    local tText   = {}
+    local sLabel  = self.sLabel
+    local nWidth  = self:getWidth()
+    local nHeight = self:getHeight()
+    local y       = self:getY()
+    local x       = self:getX()
+
+    while sLabel:len() > nWidth do
+        table.insert(tText, sLabel:sub(1, nWidth - 2))
+        sLabel = sLabel:sub(nWidth - 1)
+    end
+
+    for nLine = 1, math.min(nHeight, #tText) do
+        term.setCursorPos(x + 1, y + nLine - 1)
+        term.write(tText[nLine])
+    end
+
+    if sLabel:len() > 0 and #tText < nHeight then
+        term.setCursorPos(x + 1, y + #tText)
+        term.write(sLabel)
+    end
+end
+--uppdate-----------------------------------------
+function update(self, ...)
+    local tEventData = { ... }
+
+    if tEventData[1] == "mouse_click" and self:wasClicked(tEventData[3], tEventData[4]) then
+        -- Put your code here...
+    end
+end
 --new---------------------------------------------
 --[[
     Creates and returns a new button object.
@@ -21,7 +67,7 @@ local tButtonMetatable = { __index = getfenv() }
     @constructor
 ]]
 function new(x, y, nWidth, nHeight, sLabel, nTextColor, nBackColor)
-    local self = setmetatable(GraphicalObject.new(x, y, nWidth, nHeight, true), tButtonMetatable)
+    local self = setmetatable(GraphicalObject.new(x, y, nWidth, nHeight), tButtonMetatable)
 
     self.sLabel     = sLabel or "Button"
     self.nTextColor = nTextColor or colors.black
