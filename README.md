@@ -20,8 +20,8 @@ This ease of usage is the primary goal of Layers. While simplifying complex task
 For now, unfortunately, you'll just have to mirror the file structure of this repository where the root folder is a folder
 called 'Layers.' Basically, just make a new folder called 'Layers' in the root of your CC computer, and copy this repository into it, then run '/Layers/Main.'
 
-#Well, how does it work?
-Check out the usage documentation ;)
+#What if I want a different startup file?
+Simply rename your startup file "/_startup," so the Layers system will load it as the base program.
 
-#Alright. But how do I make a new layer?
-That's also in the usage documentation, silly ;)
+#How do I close a layer?
+Press the 'Home' button. This information is located in the 'About' interface accessible from the 'Help' layer which is activated when the system starts.
