@@ -51,7 +51,7 @@ end
 function isEventRegistered(self, sEventName)
     return self[sEventName]
 end
---getHotkeyChar-----------------------------------
+--getHotkey---------------------------------------
 function getHotkey(self)
     return self.nHotkey
 end

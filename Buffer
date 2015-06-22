@@ -437,3 +437,25 @@ function getStaticBuffer (self)
         end
     end
 end
+---------------------------------------------------------------------
+--[[
+    Creates and returns a "section" of the buffer from the given line
+    to the a stopping point.
+]]
+function getSection(self, nWidth, nStartY, nStopY)
+    nWidth  = (nWidth > 0 and nWidth <= self.nWidth) and nWidth or self.nWidth
+    
+    if not (nStartY > 0 and nStartY < nStopY and nStopY <= self.nHeight) then
+        return nil
+    end
+
+    local tSection = Buffer.new(nWidth, nHeight, self.x, self.y, false)
+
+    for nLine = nStartY, nStopY do
+        tSection.tText[nLine]       = self.tText[nLine]
+        tSection.tTextColors[nLine] = self.tTextColors[nLine]
+        tSection.tBackColors[nLine] = self.tBackColors[nLine]
+    end
+
+    return tSection
+end

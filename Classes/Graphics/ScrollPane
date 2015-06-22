@@ -3,42 +3,36 @@
                     21 June 2015
 
         A Scroll Pane object is a graphical
-    component that contains a list of other
-    graphical objects.
+    component that contains a list of 
+    text boxes. Unfortunately, with the time
+    restrictions, the scroll pane does not
+    support all graphical objects.
 
-    To implement this, I'm not sure if I should
-    make the list all just basic graphical objects,
-    or require the list to be text boxes.
-
-    The reason being is that controllign the rendering
-    of each of the graphical objects is kind of difficult
-    because I can't exactly render only a portion of the
-    object.
-
-    For example, if the scroll pane was to show only
-    the top line of a button, I don't know how, with the
-    current system, to only render the top of the bottom.
-
-    This might accomplished by rendering a container
-    around the rendered components, essentially covering
-    the pieces that exceed the boundaries of the container.
-
-    However, this would require redrawing the entirety of the
-    screen or, more accurately, all of the screen surrounding
-    the container because some graphical objects might be
-    so large that they go way, way outside of the desired
-    boundaries of the container.
-
-    2 hours to go....
+    NOTE:
+        - HORIZONTAL SCROLLING NOT CURRENTLY POSSIBLE.
+        DEADLINES, BRUH
 ]]
 --Loading APIs------------------------------------
 if not GraphicalObject then
     os.loadAPI("/Layers/Classes/Graphics/GraphicalObject")
 end
+if not ScrollBar then
+    os.loadAPI("/Layers/Classes/Graphics/ScrollBar")
+end
 
 GraphicalObject.setChild(getfenv())
-local tScrollPaneMetatable = { getfenv() }
+local tScrollPaneMetatable = { __index = getfenv() }
+--update------------------------------------------
+function update(self, ...)
+end
 --render------------------------------------------
+function render(self)
+    for nIndex = 1 + self.nScrollY, math.min(self.nHeight + self.nScrollY, #self.tTextBoxes) do
+        self.tTextBoxes[nIndex]:render()
+    end
+
+    self.tScrollBar:render()
+end
 --new---------------------------------------------
 --[[
     Creates and returns a new Scroll Pane object that
@@ -46,20 +40,33 @@ local tScrollPaneMetatable = { getfenv() }
 
     However, the graphical objects will be repositioned
     such that they stack vertically.
+
+    All of the text boxes are shrunk to have a height of
+    1, unfortunately. Something similar happens to their
+    width, too. This is a problem with writing
+    code under time restrictions and having a life :/
 ]]
 function new(x, y, nWidth, nHeight, ...)
-    local self              = setmetatable(GraphicalObject.new(x, y, nWidth, nHeight), tScrollPaneMetatable)
-    local tGraphicalObjects = { ... }
-    local nLastY            = 1
+    local self       = setmetatable(GraphicalObject.new(x, y, nWidth, nHeight), tScrollPaneMetatable)
+    local tTextBoxes = { ... }
+    local nLastY     = y
 
-    self.tGraphicalObjects = {}
+    self.tTextBoxes = {}
 
-    for key, tGraphicalObject in pairs(tGraphicalObjects) do
-        tGraphicalObject.y          = nLastY
-        self.tGraphicalObjects[key] = tGraphicalObject
+    -- If a text box has more than one line, then split the lines into
+    -- their own text boxes.
+    for key, tTextBox in pairs(tTextBoxes) do
+        tTextBox.y           = nLastY
+        tTextBox.nHeight     = 1
+        tTextBox.nWidth      = nWidth - 3
+        self.tTextBoxes[key] = tTextBox
 
-        nLastY = nLastY + tGraphicalObject.nHeight
+        nLastY = nLastY + tTextBox.nHeight
     end
+
+    self.tScrollBar = ScrollBar.new(self, nWidth, y, 1, nHeight, colors.lightGray, colors.black, colors.white)
+    self.nScrollX   = 0 -- Not currently implemented.
+    self.nScrollY   = 0
 
     return self
 end

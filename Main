@@ -21,10 +21,13 @@
     is editable via the Layers namespace with the key 'nReturnKey.'
 
     TODO:
-        + Make a whole god-damn GUI system -> buttons, etc.
+        ~ Make a whole god-damn GUI system -> buttons, etc.
         + Make a simple install script -> We need to make sure all directories/files are in place.
         + Make the loading of all classes/apis definite and centralized... That way, we don't need absolute paths.
         ~ Maybe make a how-to-use animation like Windows 8 has, you know?
+        + Make more layers.
+        + Finish the scroll pane/scroll bar system.
+        +++ FINISH DOCUMENTATION
 
     AS ALWAYS:
         Use find and go to: "Main Entry Point" if you
@@ -148,15 +151,12 @@ local function loadLayers(tContainer, sLayersPath)
 
             if bSuccess and tLayer then
                 table.insert(tContainer, tLayer)
-                print(tLayer:getName() .. " loaded.")
+                --print(tLayer:getName() .. " loaded.")
             else
-                printError("Error loading " .. sFileName .. ":\n" .. tostring(tLayer))
+                --printError("Error loading " .. sFileName .. ":\n" .. tostring(tLayer))
             end
         end
     end
-
-    print("Pausing for readability...")
-    sleep(2)
 end
 --isHotkey----------------------------------------
 --[[
@@ -198,7 +198,7 @@ end
 --Main Entry Point--------------------------------
 local cStartupThread      = createThread(sStartupPath) or createThread(sDefaultStartupPath) -- Thread for the desired startup program. 'nil' if there is none.
 local tFrontLayer         = nil                                                             -- The currently focused layer. This will be 'nil' if there is none.
-local tLayers             = {}                                                              -- All "layers" that are currently alive.
+Layers.tLayers            = {}                                                              -- All "layers" that are currently alive.
 
 -- If this is the first boot of the layers system, offer the user a tour.
 if not fs.exists(sFirstBootRecordPath) then
@@ -210,14 +210,17 @@ end
 -- a log entry, but their failure will not crash the program. Simply, they will not
 -- appear or be useable.
 loadLayers(tLayers, sLayersDirPath)
-
 term.redirect(tMainBuffer:redirect())
-print("Terminal redirected to buffer.")
 
 -- Initialize the startup thread.
 coroutine.resume(cStartupThread)
 term.redirect(tBaseTerminal)
 tMainBuffer:render()
+
+-- Queue the events that will open the help layer, so
+-- the user can see it when they start.
+os.queueEvent("key", keys.rightAlt)
+os.queueEvent("key", keys.h)
 
 local bIsRunning = coroutine.status(cStartupThread) ~= "dead" -- Whether or not the underlying startup thread is still running.
 --Main Function Loop------------------------------
@@ -305,9 +308,7 @@ local function main()
 end
 --------------------------------------------------
 local bSuccess, sError = pcall(main)
-
 term.redirect(tMainBuffer.tTerm) -- Just in case.
-print("Terminal restored.")
 
 if not bSuccess then
     printError("Error occurred during execution:\n" .. sError)

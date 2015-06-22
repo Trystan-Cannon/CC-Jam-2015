@@ -34,6 +34,18 @@ end
 
 Layer.setChild(getfenv())
 local tHelpMetatable = { __index = getfenv() }
+--getCharFromKey----------------------------------
+--[[
+    Returns the character (element key) for the given
+    key code.
+]]
+local function getCharFromKey(nKey)
+    for sChar, nKeyCode in pairs(keys) do
+        if nKeyCode == nKey then
+            return sChar
+        end
+    end
+end
 --summon------------------------------------------
 function summon(self)
     Layer.summon(self)
@@ -60,7 +72,7 @@ end
 --new---------------------------------------------
 function new()
     local self                  = setmetatable(Layer.new("Help", keys.h), tHelpMetatable)
-    local tMainInterface        = Interface.new(25, 5, 1, 2)
+    local tMainInterface        = Interface.new(25, 17, 1, 2)
     local tAboutInterface       = Interface.new(25, 15, Layers.SCREEN_WIDTH - 24, 3)
     local tAboutInterfaceBuffer = tAboutInterface:getBuffer()
 
@@ -72,8 +84,7 @@ function new()
     tMainInterface:getBuffer():clear()
 
     -- Create graphical components for the main interface.
-    local tHelpLayerTextBox = TextBox.new(2, 2, nil, 1, "Help Layer", colors.white, colors.gray)
-
+    local tHelpLayerTextBox  = TextBox.new(2, 2, nil, 1, "Help Layer", colors.white, colors.gray)
     local sAboutAccessLabel  = " About "
     local tAboutAccessButton = Button.new(tMainInterface:getBuffer().nWidth - sAboutAccessLabel:len() - 1, 2, sAboutAccessLabel:len(),
                                           3, sAboutAccessLabel, colors.white, colors.lightGray, true)
@@ -87,6 +98,23 @@ function new()
 
         self.bShowAboutInterface = not self.bShowAboutInterface
     end
+
+    -- Create a scroll pane in which all of the currently
+    -- loaded layers exist.
+    -- They each require their own text box.
+    local tLayerTextBoxes = {}
+    for nIndex, _ in pairs(fs.list(Layers.sLayersDirPath)) do
+        table.insert(tLayerTextBoxes,
+            TextBox.new(2, -1, nil, 1,
+            function()
+                -- This is bad design :(
+                return " Alt + " .. getCharFromKey(Layers.tLayers[nIndex]:getHotkey()):upper() .. " -- " .. Layers.tLayers[nIndex]:getName()
+            end
+            , colors.white, colors.lightGray)
+        )
+    end
+
+    local tLayersScrollPane = ScrollPane.new(2, 6, tMainInterface:getBuffer().nWidth - 2, 11, unpack(tLayerTextBoxes))
     --------------------------------------------------
     -- Initialize the about interface.
     tAboutInterfaceBuffer:setBackgroundColor(colors.gray)
@@ -95,7 +123,8 @@ function new()
     -- Create text boxes for the about interface.
     local tAuthorTextBox      = TextBox.new(2, 2, nil, 1, "Author : Grim Reaper", colors.white, colors.gray)
     local tVersionTextBox     = TextBox.new(2, 3, nil, 1, "Version: 1.0", colors.white, colors.gray)
-    local tDescriptionTextBox = TextBox.new(2, 5, tAboutInterface:getBuffer().nWidth - 2, tAboutInterface:getBuffer().nHeight - 5,
+    local tCloseInfoTextBox   = TextBox.new(2, 4, nil, 1, "'Home' to close a Layer", colors.white, colors.gray)
+    local tDescriptionTextBox = TextBox.new(2, 6, tAboutInterface:getBuffer().nWidth - 2, tAboutInterface:getBuffer().nHeight - 6,
         "    \"Layers\" is a simple system that creates a seemless integration of background \"widget\" like programs and the default shell of the user's choosing.",
     colors.white, colors.gray)
     --------------------------------------------------
@@ -110,10 +139,12 @@ function new()
     -- Add graphical components to the main interface.
     tMainInterface:addGraphicalObject(tHelpLayerTextBox, "tHelpLayerTextBox")
     tMainInterface:addGraphicalObject(tAboutAccessButton, "tAboutAccessButton")
+    tMainInterface:addGraphicalObject(tLayersScrollPane, "tLayersScrollPane")
     --------------------------------------------------
     -- Add graphical components to the about interface.
     tAboutInterface:addGraphicalObject(tAuthorTextBox, "tAuthorTextBox")
     tAboutInterface:addGraphicalObject(tVersionTextBox, "tVersionTextBox")
+    tAboutInterface:addGraphicalObject(tCloseInfoTextBox, "tCloseInfoTextBox")
     tAboutInterface:addGraphicalObject(tDescriptionTextBox, "tDescriptionTextBox")
     --------------------------------------------------
     -- Add interfaces to thelayer.

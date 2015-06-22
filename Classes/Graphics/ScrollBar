@@ -1,0 +1,53 @@
+--[[
+    ScrollBar       Trystan Cannon
+                    21 June 2015
+
+        A Scroll Bar is a necessary
+    graphical component of a 'Scroll Pane.'
+
+        The Scroll Bar allows the user
+    to scroll vertically and horizontally,
+    depending on the orientation of the bar,
+    through a list of graphical objects.
+]]
+--Load APIs---------------------------------------
+if not GraphicalObject then
+    os.loadAPI("/Layers/Classes/Graphics/GraphicalObject")
+end
+
+GraphicalObject.setChild(getfenv())
+local tScrollBarMetatable = { __index= getfenv() }
+--update------------------------------------------
+function update(self, ...)
+end
+--------------------------------------------------
+function render(self)
+    -- Compute the distance down the pane we are. This
+    -- is dependent on the height of the pane ....
+
+    -- Top arrow.
+    term.setCursorPos(self.x, self.y)
+    term.setBackgroundColor(self.nButtonColor)
+    term.write(" ")
+    -- Bottom arrow.
+    term.setCursorPos(self.x, self.y + self.nHeight - 1)
+    term.write(" ")
+    -- Slider background.
+    term.setBackgroundColor(self.nSliderBackColor)
+    for y = 1, self.nHeight - 2 do
+        term.setCursorPos(self.x, self.y + y)
+        term.write(" ")
+    end
+end
+--new---------------------------------------------
+function new(tScrollPane, x, y, nWidth, nHeight, nButtonColor, nSliderColor, nSliderBackColor)
+    local self = setmetatable(GraphicalObject.new(x, y, nWidth, nHeight), tScrollBarMetatable)
+
+    self.nButtonColor     = nButtonColor or colors.black
+    self.nSliderColor     = nSliderColor or colors.white
+    self.nSliderBackColor = nSliderBackColor or colors.black
+
+    self.tScrollPane = tScrollPane
+    return self
+end
+--------------------------------------------------
