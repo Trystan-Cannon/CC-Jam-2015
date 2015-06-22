@@ -12,18 +12,6 @@
         Layers receive events only when they are summoned.
     However, layers can be registered to receive certain
     events while they are hidden away, too.
-
-    Layer interfaces?
-        Layers need a single, main graphical interface.
-        However, some programmers might want to create
-        several gui's with which the user should interact.
-
-        So, each layer should have a single main interaction
-        interface that is summoned from the hotkey?
-        Or, should all of interfaces be summoned at the same time?
-        Of course, though, the user might want to summon
-        a few gui's while leaving a few in the hole, waiting to
-        be called up.
 ]]
 --Main Entry Point--------------------------------
 local tLayerMetatable = { __index = getfenv() }
