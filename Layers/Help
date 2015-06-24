@@ -54,6 +54,7 @@ end
 --hide--------------------------------------------
 function hide(self)
     Layer.hide(self)
+    Layers.refreshScreen()
 end
 --update------------------------------------------
 function update(self, ...)

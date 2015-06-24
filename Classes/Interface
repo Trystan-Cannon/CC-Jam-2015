@@ -26,18 +26,6 @@ if not Buffer then
 end
 
 local tInterfaceMetatable = { __index = getfenv() }
---isSummoned--------------------------------------
-function isSummoned(self)
-    return self.bIsSummoned
-end
---summon------------------------------------------
-function summon(self)
-    self.bIsSummoned = true
-end
---hide--------------------------------------------
-function hide(self)
-    self.bIsSummoned = false
-end
 --getBuffer---------------------------------------
 function getBuffer(self)
     return self.tBuffer
@@ -100,12 +88,10 @@ end
 
     @constructor
 ]]
-function new(nWidth, nHeight, x, y)
+function new(nWidth, nHeight, x, y, sName)
     return setmetatable({
-        tBuffer           = Buffer.new(nWidth, nHeight, x, y, Layers.tBaseTerminal),
-        tGraphicalObjects = {},
-
-        bIsSummoned = false
+        tBuffer           = Buffer.new(nWidth, nHeight, x, y, Layers.tBaseTerminal, sName),
+        tGraphicalObjects = {}
     }, tInterfaceMetatable)
 end
 --------------------------------------------------

@@ -77,8 +77,6 @@
 local tBufferMetatable = { __index = getfenv() }
 ----------------------- Variables -----------------------
 
-
-
 ---------------------------------------------------------------------
 --[[
             Goes through a line in a buffer and
@@ -236,8 +234,8 @@ function clear (self, bRecord)
             -- performing the check within the function itself.
             if bRecord then
                 self.tRedirect[sFunctionName] = function (...)
-                    self[sFunctionName] (self, ...)
-                    return self.tTerm[sFunctionName](...)
+                    self.tTerm[sFunctionName](...)
+                    return self[sFunctionName] (self, ...)
                 end
             else
                 self.tRedirect[sFunctionName] = function (...)
@@ -317,7 +315,7 @@ end
     @return self
 ]]
 function render (self)
-    term.redirect (self.tTerm)
+    local tCurrentTerm = term.redirect (self.tTerm)
 
     local sCurrentTextColor;
     local sCurrentBackColor;
@@ -351,6 +349,8 @@ function render (self)
     if self.sBackColor ~= sCurrentBackColor then
         term.setBackgroundColor (2 ^ tonumber (self.sBackColor, 16))
     end
+
+    term.redirect(tCurrentTerm)
 end
 ---------------------------------------------------------------------
 --[[

@@ -58,6 +58,7 @@ end
 --hide--------------------------------------------
 function hide(self)
     self.bIsSummoned = false
+    Layers.refreshScreen()
 end
 --update------------------------------------------
 --[[
